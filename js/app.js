@@ -1,12 +1,12 @@
-const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas"; //https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones/";
+const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas";
 const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
 
-"https://opendata.aemet.es/opendata/api/valores/climatologicos/inventarioestaciones/todasestaciones/?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
 
 let datos;
 let maxDate;
 let uniqueDates;
 let uniqueUbic;
+let heatLayer;
 
 //Crear el mapa
 const map = L.map('map').setView([39.5, -0.4], 10);
@@ -16,10 +16,8 @@ const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
-
-document.getElementById("btn_refresh").onclick = () => refreshData();
-
-
+//Pedir los datos a la API
+refreshData();
 
 
 function refreshData() {
@@ -41,25 +39,15 @@ function refreshData() {
                     return response.json(); // Convertir la respuesta a formato JSON
                 })
                 .then(data2 => {
-                    //filtrar datos para que sea como en heatmap
-                    // var heatData = [];
-                    // data2.forEach(e => {
-                    //     if(e.provincia===)
-                    // });
                     datos = data2;
                     for (let i = 0; i < data2.length; i++) {
                         datos[i].fint = new Date(data2[i].fint);
-
                     }
                     var allDates = data2.map(d => d.fint);
 
                     uniqueDates = allDates.filter(onlyUniqueDates);
-                    // uniqueDates = allDates.filter((fecha, index, self) =>
-                    //     index === self.findIndex((f) => f.getTime() === fecha.getTime())
-                    // );
-                    //uniqueDates = allDates.filter(onlyUnique);
+
                     console.log("UniqueDates:" + uniqueDates);
-                    //uniqueDates = uniqueDates.map(d => new Date(d));
                     console.log("UniqueDates.map:" + uniqueDates);
 
                     maxDate = new Date(getMaxDate(allDates));
@@ -67,20 +55,16 @@ function refreshData() {
 
                     console.log("Max Date: " + maxDate)
 
-                    var heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
-                        .map(d => [d.lat, d.lon, d.tamax]);
 
-                    //Mostrar datos heat
-                    L.heatLayer(heatData, {
-                        radius: 25, // radio de los puntos de calor
-                        blur: 25,   // difuminado de los puntos
-                        maxZoom: 13 // zoom máximo en el que se puede ver el mapa de calor
-                    }).addTo(map);
 
-                    //Habilitar uso de markers
+                    //Habilitar botones y desplegables
                     agregarDesplegable(uniqueDates);
-                    document.getElementById("btn_markers").classList.replace("btn-default", "btn-primary");
-                    document.getElementById("btn_markers").onclick = () => setMarkers();
+                    document.getElementById("form").style.visibility = "visible";
+                    enableHeatAndMarkers();
+
+                    //Habilitar pestañas
+                    document.getElementById("tab_tabla").onclick = () => enableTabla();
+                    document.getElementById("tab_mapa").onclick = () => enableMap();
 
                 })
                 .catch(error => {
@@ -91,6 +75,95 @@ function refreshData() {
             console.error('Hubo un problema con la solicitud fetch:', error);
         });
 }
+function enableTabla() {
+    document.getElementById("tabla").style.visibility = "visible";
+    document.getElementById("map").style.visibility = "hidden";
+    disableHeatAndMarkers();
+    poblarTabla(datos);
+
+
+}
+
+function poblarTabla(data) {
+    // Obtener el elemento de la tabla en el HTML
+    const tabla = document.getElementById('tabla');
+
+    // Asegurarse de que la tabla esté vacía antes de agregar nuevos datos
+    tabla.innerHTML = '';
+
+    // Crear la cabecera de la tabla
+    const cabecera = document.createElement('thead');
+    const filaCabecera = document.createElement('tr');
+
+    // Los encabezados de la tabla
+    const encabezados = ['Ubi', 'Tamax', 'Tamin', 'Ta', 'Prec'];
+
+    // Crear celdas para los encabezados
+    encabezados.forEach(encabezado => {
+        const celda = document.createElement('th');
+        celda.textContent = encabezado;
+        filaCabecera.appendChild(celda);
+    });
+
+    cabecera.appendChild(filaCabecera);
+    tabla.appendChild(cabecera);
+
+    // Crear el cuerpo de la tabla
+    const cuerpo = document.createElement('tbody');
+    var select = document.getElementById('desplegable');
+    var selectedDate = new Date(select.options[select.selectedIndex].value);
+    // Recorrer cada objeto del array de datos y crear una fila
+    data.filter(d => d.fint.getTime() === selectedDate.getTime())
+        .forEach(item => {
+            const fila = document.createElement('tr');
+
+            // Crear celdas para cada propiedad del objeto
+            const celdas = [item.ubi, item.tamax, item.tamin, item.ta, item.prec];
+            celdas.forEach(valor => {
+                const celda = document.createElement('td');
+                celda.textContent = valor;
+                fila.appendChild(celda);
+            });
+
+            cuerpo.appendChild(fila);
+        });
+
+    tabla.appendChild(cuerpo);
+}
+function enableMap() {
+    document.getElementById("tabla").style.visibility = "hidden";
+    document.getElementById("map").style.visibility = "visible";
+    enableHeatAndMarkers();
+}
+
+function disableHeatAndMarkers() {
+    document.getElementById("btn_markers").classList.replace("btn-positive", "btn-default");
+    document.getElementById("btn_markers").onclick = null;
+    document.getElementById("btn_heatmap").classList.replace("btn-positive", "btn-default");
+    document.getElementById("btn_heatmap").onclick = null;
+}
+function enableHeatAndMarkers() {
+    document.getElementById("btn_markers").classList.replace("btn-default", "btn-positive");
+    document.getElementById("btn_markers").onclick = () => setMarkers();
+    document.getElementById("btn_heatmap").classList.replace("btn-default", "btn-positive");
+    document.getElementById("btn_heatmap").onclick = () => plotHeatMap();
+}
+
+function plotHeatMap() {
+    var heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
+        .map(d => [d.lat, d.lon, d.tamax]);
+
+    //Si tengo alguna capa de calor la borro
+    if (heatLayer != null)
+        map.removeLayer(heatLayer);
+    //Mostrar datos heat
+    heatLayer = L.heatLayer(heatData, {
+        radius: 25, // radio de los puntos de calor
+        blur: 25, // difuminado de los puntos
+        maxZoom: 13 // zoom máximo en el que se puede ver el mapa de calor
+    }).addTo(map);
+}
+
 /**
  *
  * @param {Date[]} dateArray
@@ -98,7 +171,7 @@ function refreshData() {
 function agregarDesplegable(dateArray) {
     //alert(dateArray);
     // Crear el elemento <select>
-    var select = document.createElement('select');
+    var select = document.getElementById('desplegable');//document.createElement('select');
 
     // Crear opciones para el desplegable
     dateArray.forEach(e => {
@@ -109,11 +182,11 @@ function agregarDesplegable(dateArray) {
     });
 
     // Obtener el objeto con id 'sidepane'
-    var sidepane = document.getElementById('sidebar');
+    //var sidepane = document.getElementById('sidebar');
 
     // Añadir el <select> al innerHTML del objeto con id 'sidepane'
-    sidepane.innerHTML = ''; // Limpiar el contenido anterior (opcional)
-    sidepane.appendChild(select);
+    //sidepane.innerHTML = ''; // Limpiar el contenido anterior (opcional)
+    //sidepane.appendChild(select);
 }
 /**
  *
@@ -147,7 +220,7 @@ function setMarkers() {
                 radius: 5
             }).addTo(map).bindPopup(
                 '<b> Ubicación: ' + d.ubi + "</b>" +
-                "<br>Hora: " + d.fint.toISOString() +
+                "<br>Hora: " + toDateHourString(d.fint) +
                 "<br>Precipitación: " + d.prec + " mm" +
                 "<br>Tª min: " + d.tamin + " ºC" +
                 "<br>Tª max: " + d.tamax + " ºC" +

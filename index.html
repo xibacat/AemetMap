@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>AemetMap</title>
   <link rel="stylesheet" href="css/photon.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <!-- Make sure you put this AFTER Leaflet's CSS -->
@@ -19,26 +19,75 @@
     </header>
     <div class="window-content">
       <div class="pane-group">
-        <div class="pane-sm sidebar" id="sidebar"></div>
+        <div class="pane-sm sidebar" id="sidebar">
+          <form style="visibility: hidden; margin-left: 5px;" id="form">
+            <br>
+            <label>
+              <br>
+              <b>Elige la hora a representar</b>
+            </label>
+            <select class="form-control" id="desplegable">
+            </select>
+            <div>
+              <label>
+                <br>
+                <b>Elige la variable a representar</b>
+              </label>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="radios" checked>
+                  Temp max (ºC)
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="radios">
+                  Temp min (ºC)
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="radios">
+                  Temp actual (ºC)
+                </label>
+              </div>
+              <div class="radio">
+                <label>
+                  <input type="radio" name="radios">
+                  Precipitación (mm/m2)
+                </label>
+              </div>
+              <br>
+              <div class="checkbox" id="totalizar">
+                <label>
+                  <input type="checkbox"> Totalizar
+                </label>
+              </div>
+            </div>
+          </form>
+        </div>
+
         <div class="pane">
           <div class="tab-group">
-            <div class="tab-item active" id="tab_Mapa">
-              <span class="icon icon-cancel icon-close-tab"></span>
+            <div class="tab-item active" id="tab_mapa">
+              <!-- <span class="icon icon-cancel icon-close-tab"></span> -->
               Mapa
             </div>
-            <div class="tab-item " id="tab_Tabla">
-              <span class="icon icon-cancel icon-close-tab"></span>
+            <div class="tab-item " id="tab_tabla">
+              <!-- <span class="icon icon-cancel icon-close-tab"></span> -->
               Tabla
             </div>
           </div>
-          <div id="map" style="height: 800px;width: 400;"></div>
+          <div id="map" style="height: 600px;"></div>
+          <table class="table-striped" style="visibility: hidden;" id="tabla">
+          </table>
         </div>
       </div>
     </div>
     <footer class="toolbar toolbar-footer">
       <div class="toolbar-actions">
-        <button class="btn btn-primary pull-left" id="btn_refresh">
-          Refresh Data
+        <button class="btn btn-default pull-left" id="btn_heatmap">
+          Plot Heat Map
         </button>
         <button class="btn btn-default pull-left" id="btn_markers">
           Add Markers to Map

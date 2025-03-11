@@ -7,6 +7,9 @@ let maxDate;
 let uniqueDates;
 let uniqueUbic;
 let heatLayer;
+let menuActive = true;
+let btn_menu = document.getElementById("btn_menu");
+btn_menu.onclick = () => clickMenu();
 
 //Crear el mapa
 const map = L.map('map').setView([39.5, -0.4], 10);
@@ -16,9 +19,22 @@ const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 
+
 //Pedir los datos a la API
 refreshData();
 
+function clickMenu() {
+    var sidebar = document.getElementById("sidebar");
+    if (menuActive) {
+        btn_menu.innerHTML = '<span class="icon icon-menu"></span>';
+        sidebar.style.display = "none";
+        menuActive = false;
+    } else {
+        btn_menu.innerHTML = '<span class="icon icon-cancel-squared"></span>';
+        sidebar.style.display = "initial";
+        menuActive = true;
+    }
+ }
 
 function refreshData() {
 
@@ -75,14 +91,6 @@ function refreshData() {
             console.error('Hubo un problema con la solicitud fetch:', error);
         });
 }
-function enableTabla() {
-    document.getElementById("tabla").style.display = "initial";
-    document.getElementById("map").style.display = "none";
-    disableHeatAndMarkers();
-    poblarTabla(datos);
-
-
-}
 
 function poblarTabla(data) {
     // Obtener el elemento de la tabla en el HTML
@@ -129,6 +137,13 @@ function poblarTabla(data) {
         });
 
     tabla.appendChild(cuerpo);
+}
+
+function enableTabla() {
+    document.getElementById("tabla").style.display = "initial";
+    document.getElementById("map").style.display = "none";
+    disableHeatAndMarkers();
+    poblarTabla(datos);
 }
 function enableMap() {
     document.getElementById("tabla").style.display = "none";

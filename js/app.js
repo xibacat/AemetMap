@@ -8,6 +8,7 @@ let uniqueDates;
 let uniqueUbic;
 let heatLayer;
 let menuActive = true;
+let markersOn = false;
 let btn_menu = document.getElementById("btn_menu");
 btn_menu.onclick = () => clickMenu();
 
@@ -18,7 +19,8 @@ const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 17,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
-
+//Grupo de markers que luego podré eliminar;
+var markerGroup = L.layerGroup().addTo(map);
 
 //Pedir los datos a la API
 refreshData();
@@ -34,7 +36,7 @@ function clickMenu() {
         sidebar.style.display = "initial";
         menuActive = true;
     }
- }
+}
 
 function refreshData() {
 
@@ -227,21 +229,30 @@ function setMarkers() {
     if (datos.length == 0)
         refreshData();
 
-    var myRenderer = L.canvas({ padding: 0.5 });
-    datos.filter(d => d.fint.getTime() === maxDate.getTime())
-        .forEach(d => {
-            L.circleMarker([d.lat, d.lon], {
-                renderer: myRenderer,
-                radius: 5
-            }).addTo(map).bindPopup(
-                '<b> Ubicación: ' + d.ubi + "</b>" +
-                "<br>Hora: " + toDateHourString(d.fint) +
-                "<br>Precipitación: " + d.prec + " mm" +
-                "<br>Tª min: " + d.tamin + " ºC" +
-                "<br>Tª max: " + d.tamax + " ºC" +
-                "<br>Tª actual: " + d.ta + " ºC"
-            );
-        });
+    if (markersOn) {
+        markerGroup.clearLayers();
+        markersOn = false;
+        document.getElementById("btn_markers").innerHTML = "Add Markers to Map"
+    }
+    else {
+        var markerRenderer = L.canvas({ padding: 0.5 });
+        datos.filter(d => d.fint.getTime() === maxDate.getTime())
+            .forEach(d => {
+                L.circleMarker([d.lat, d.lon], {
+                    renderer: markerRenderer,
+                    radius: 5
+                }).addTo(markerGroup).bindPopup(
+                    '<b> Ubicación: ' + d.ubi + "</b>" +
+                    "<br>Hora: " + toDateHourString(d.fint) +
+                    "<br>Precipitación: " + d.prec + " mm" +
+                    "<br>Tª min: " + d.tamin + " ºC" +
+                    "<br>Tª max: " + d.tamax + " ºC" +
+                    "<br>Tª actual: " + d.ta + " ºC"
+                );
+            });
+        markersOn = true;
+        document.getElementById("btn_markers").innerHTML = "Remove Markers"
+    }
 }
 /**
  *

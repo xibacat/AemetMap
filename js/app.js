@@ -3,12 +3,14 @@ const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0
 
 
 let datos;
+let datosToPlot;
 let maxDate;
 let uniqueDates;
 let uniqueUbic;
 let heatLayer;
 let menuActive = true;
 let markersOn = false;
+let mapOn = false;
 let btn_menu = document.getElementById("btn_menu");
 btn_menu.onclick = () => clickMenu();
 
@@ -163,9 +165,58 @@ function enableHeatAndMarkers() {
     document.getElementById("btn_markers").classList.replace("btn-default", "btn-positive");
     document.getElementById("btn_markers").onclick = () => setMarkers();
     document.getElementById("btn_heatmap").classList.replace("btn-default", "btn-positive");
-    document.getElementById("btn_heatmap").onclick = () => plotHeatMap();
+    document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap();
 }
 
+function plotInterpolatedMap() {
+    if (mapOn) {
+        map.removeLayer(heatLayer);
+        mapOn = false;
+        document.getElementById("btn_heatmap").innerHTML = "Plot Heat Map"
+    }
+    else {
+        datosToPlot = datos;
+        //Transformar datos a puntos de Turf
+        var points = datosToPlot
+            .filter(d => d.fint.getTime() === maxDate.getTime()
+                && d.tamax != null
+                && d.lat > 35)
+            .map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax }));
+
+        //convert to Turf featureCollection
+        points = turf.featureCollection(points);
+        //interpolation options: rectangular grid using 'dato' variable in kilometers using the power of 2, higher values result in smoother result
+        var options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 2 };
+        //create Turf grid
+        var malla = turf.interpolate(points, 10, options);
+        //add to Leaflet
+        heatLayer = L.geoJSON(malla, {
+            style: function (feature) {
+                var val = feature.properties.dato;
+                if (val > 30) {
+                    return { fillColor: "orangered", fillOpacity: 0.5, weight: 0 };
+                } else if (val > 20 && val < 30) {
+                    return { fillColor: "yellowgreen", fillOpacity: 0.5, weight: 0 };
+                } else if (val > 10 && val < 20) {
+                    return { fillColor: "darkgreen", fillOpacity: 0.5, weight: 0 };
+                } else {
+                    return { fillColor: "blue", fillOpacity: 0.5, weight: 0 };
+                }
+            }//,
+            // onEachFeature: function (feature, layer) {
+            //     layer.on({
+            //         mouseover: function (e) {
+            //             val = e.target.feature.properties.dato.toFixed(2);
+            //             e.target.bindTooltip(val).openTooltip();
+            //         }
+            //     });
+            // }
+        }).addTo(map);
+        heatLayer.eachLayer(l => l.bringToBack());
+        mapOn = true;
+        document.getElementById("btn_heatmap").innerHTML = "Delete Heat Map"
+    }
+}
 function plotHeatMap() {
     var heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
         .map(d => [d.lat, d.lon, d.tamax]);
@@ -250,6 +301,7 @@ function setMarkers() {
                     "<br>Tª actual: " + d.ta + " ºC"
                 );
             });
+        markerGroup.eachLayer(l => l.bringToBack());
         markersOn = true;
         document.getElementById("btn_markers").innerHTML = "Remove Markers"
     }

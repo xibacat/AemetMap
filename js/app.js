@@ -76,8 +76,8 @@ function refreshData() {
         });
 }
 function enableTabla() {
-    document.getElementById("tabla").style.visibility = "visible";
-    document.getElementById("map").style.visibility = "hidden";
+    document.getElementById("tabla").style.display = "initial";
+    document.getElementById("map").style.display = "none";
     disableHeatAndMarkers();
     poblarTabla(datos);
 
@@ -131,8 +131,8 @@ function poblarTabla(data) {
     tabla.appendChild(cuerpo);
 }
 function enableMap() {
-    document.getElementById("tabla").style.visibility = "hidden";
-    document.getElementById("map").style.visibility = "visible";
+    document.getElementById("tabla").style.display = "none";
+    document.getElementById("map").style.display = "block";
     enableHeatAndMarkers();
 }
 

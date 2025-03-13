@@ -3,7 +3,6 @@ const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0
 
 
 let datos;
-let datosToPlot;
 let maxDate;
 let uniqueDates;
 let uniqueUbic;
@@ -27,6 +26,9 @@ var markerGroup = L.layerGroup().addTo(map);
 //Pedir los datos a la API
 refreshData();
 
+/**
+ * Esconder y mostrar el panel lateral
+ */
 function clickMenu() {
     var sidebar = document.getElementById("sidebar");
     if (menuActive) {
@@ -39,7 +41,9 @@ function clickMenu() {
         menuActive = true;
     }
 }
-
+/**
+ * Pedir los datos a la API y habilitar la interfaz activa
+ */
 function refreshData() {
 
     fetch(URL_AEMET + APIKEY_AEMET) // Reemplaza con tu URL de API
@@ -75,16 +79,8 @@ function refreshData() {
 
                     console.log("Max Date: " + maxDate)
 
-
-
                     //Habilitar botones y desplegables
-                    agregarDesplegable(uniqueDates);
-                    document.getElementById("form").style.visibility = "visible";
-                    enableHeatAndMarkers();
-
-                    //Habilitar pestañas
-                    document.getElementById("tab_tabla").onclick = () => enableTabla();
-                    document.getElementById("tab_mapa").onclick = () => enableMap();
+                    habilitarInterfaz();
 
                 })
                 .catch(error => {
@@ -95,52 +91,24 @@ function refreshData() {
             console.error('Hubo un problema con la solicitud fetch:', error);
         });
 }
+function habilitarInterfaz() {
+    agregarDesplegable(uniqueDates);
+    document.getElementById("form").style.visibility = "visible";
+    enableHeatAndMarkers();
+    document.getElementsByName("radios").forEach(r => { r.onchange = () => optionsChanged(); });
+    document.getElementById('desplegable').onchange = () => optionsChanged();
+    document.getElementById('totalizar').onchange = () => optionsChanged();
 
-function poblarTabla(data) {
-    // Obtener el elemento de la tabla en el HTML
-    const tabla = document.getElementById('tabla');
+    //Habilitar pestañas
+    document.getElementById("tab_tabla").onclick = () => enableTabla();
+    document.getElementById("tab_mapa").onclick = () => enableMap();
+}
 
-    // Asegurarse de que la tabla esté vacía antes de agregar nuevos datos
-    tabla.innerHTML = '';
-
-    // Crear la cabecera de la tabla
-    const cabecera = document.createElement('thead');
-    const filaCabecera = document.createElement('tr');
-
-    // Los encabezados de la tabla
-    const encabezados = ['Ubi', 'Tamax', 'Tamin', 'Ta', 'Prec'];
-
-    // Crear celdas para los encabezados
-    encabezados.forEach(encabezado => {
-        const celda = document.createElement('th');
-        celda.textContent = encabezado;
-        filaCabecera.appendChild(celda);
-    });
-
-    cabecera.appendChild(filaCabecera);
-    tabla.appendChild(cabecera);
-
-    // Crear el cuerpo de la tabla
-    const cuerpo = document.createElement('tbody');
-    var select = document.getElementById('desplegable');
-    var selectedDate = new Date(select.options[select.selectedIndex].value);
-    // Recorrer cada objeto del array de datos y crear una fila
-    data.filter(d => d.fint.getTime() === selectedDate.getTime())
-        .forEach(item => {
-            const fila = document.createElement('tr');
-
-            // Crear celdas para cada propiedad del objeto
-            const celdas = [item.ubi, item.tamax, item.tamin, item.ta, item.prec];
-            celdas.forEach(valor => {
-                const celda = document.createElement('td');
-                celda.textContent = valor;
-                fila.appendChild(celda);
-            });
-
-            cuerpo.appendChild(fila);
-        });
-
-    tabla.appendChild(cuerpo);
+function optionsChanged() {
+    if (document.getElementById("tabla").style.display === "initial")
+        poblarTabla(datos);
+    if (document.getElementById("map").style.display === "")
+        plotInterpolatedMap(datos);
 }
 
 function enableTabla() {
@@ -151,10 +119,9 @@ function enableTabla() {
 }
 function enableMap() {
     document.getElementById("tabla").style.display = "none";
-    document.getElementById("map").style.display = "block";
+    document.getElementById("map").style.display = "";
     enableHeatAndMarkers();
 }
-
 function disableHeatAndMarkers() {
     document.getElementById("btn_markers").classList.replace("btn-positive", "btn-default");
     document.getElementById("btn_markers").onclick = null;
@@ -165,26 +132,38 @@ function enableHeatAndMarkers() {
     document.getElementById("btn_markers").classList.replace("btn-default", "btn-positive");
     document.getElementById("btn_markers").onclick = () => setMarkers();
     document.getElementById("btn_heatmap").classList.replace("btn-default", "btn-positive");
-    document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap();
+    document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap(datos);
 }
 
-function plotInterpolatedMap() {
+function plotInterpolatedMap(datosToPlot) {
     if (mapOn) {
         map.removeLayer(heatLayer);
         mapOn = false;
         document.getElementById("btn_heatmap").innerHTML = "Plot Heat Map"
     }
     else {
-        datosToPlot = datos;
         //Transformar datos a puntos de Turf
         var points = datosToPlot
-            .filter(d => d.fint.getTime() === maxDate.getTime()
-                && d.tamax != null
-                && d.lat > 35)
-            .map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax }));
+            .filter(d => d.fint.getTime() === getSelectedDate().getTime() && d.lat > 35);
+        switch (document.querySelector('input[name="radios"]:checked').id) {
+            case "ta":
+                points = points.filter(d => d.tamax != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta }));
+                break;
+            case "tmin":
+                points = points.filter(d => d.tamin != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin }));
+                break;
+            case "prec":
+                points = points.filter(d => d.prec != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.prec }));
+                break;
+            default: //tamax
+                points = points.filter(d => d.tamax != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax }));
+                break;
+        }
+
 
         //convert to Turf featureCollection
         points = turf.featureCollection(points);
+
         //interpolation options: rectangular grid using 'dato' variable in kilometers using the power of 2, higher values result in smoother result
         var options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 2 };
         //create Turf grid
@@ -212,11 +191,66 @@ function plotInterpolatedMap() {
             //     });
             // }
         }).addTo(map);
+
         heatLayer.eachLayer(l => l.bringToBack());
         mapOn = true;
         document.getElementById("btn_heatmap").innerHTML = "Delete Heat Map"
     }
 }
+/**
+ *
+ * @param {Array} data
+ */
+function poblarTabla(data) {
+    // Obtener el elemento de la tabla en el HTML
+    const tabla = document.getElementById('tabla');
+
+    // Asegurarse de que la tabla esté vacía antes de agregar nuevos datos
+    tabla.innerHTML = '';
+
+    // Crear la cabecera de la tabla
+    const cabecera = document.createElement('thead');
+    const filaCabecera = document.createElement('tr');
+
+    // Los encabezados de la tabla
+    const encabezados = ['Ubi', 'Tamax', 'Tamin', 'Ta', 'Prec'];
+
+    // Crear celdas para los encabezados
+    encabezados.forEach(encabezado => {
+        const celda = document.createElement('th');
+        celda.textContent = encabezado;
+        filaCabecera.appendChild(celda);
+    });
+
+    cabecera.appendChild(filaCabecera);
+    tabla.appendChild(cabecera);
+
+    // Crear el cuerpo de la tabla
+    const cuerpo = document.createElement('tbody');
+    // Recorrer cada objeto del array de datos y crear una fila
+    if (document.getElementById('totalizar').checked) {
+
+    }
+    else {
+        data = data.filter(d => d.fint.getTime() === getSelectedDate().getTime());
+    }
+    data.forEach(item => {
+        const fila = document.createElement('tr');
+
+        // Crear celdas para cada propiedad del objeto
+        const celdas = [item.ubi, item.tamax, item.tamin, item.ta, item.prec];
+        celdas.forEach(valor => {
+            const celda = document.createElement('td');
+            celda.textContent = valor;
+            fila.appendChild(celda);
+        });
+
+        cuerpo.appendChild(fila);
+    });
+
+    tabla.appendChild(cuerpo);
+}
+
 function plotHeatMap() {
     var heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
         .map(d => [d.lat, d.lon, d.tamax]);
@@ -274,8 +308,14 @@ function toDateHourString(fecha) {
         hour12: false       // Si se usa el formato de 24 horas
     });
 }
-
-
+/**
+ *
+ * @returns
+ */
+function getSelectedDate() {
+    var select = document.getElementById('desplegable');
+    return new Date(select.options[select.selectedIndex].value);
+}
 function setMarkers() {
     if (datos.length == 0)
         refreshData();

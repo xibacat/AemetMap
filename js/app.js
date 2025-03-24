@@ -156,7 +156,7 @@ function plotInterpolatedMap(datosToPlot) {
             case "ta":
                 points = points.filter(d => isSafeNum(d.ta)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta }));
                 break;
-            case "tmin":
+            case "tamin":
                 points = points.filter(d => isSafeNum(d.tamin)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin }));
                 break;
             case "prec":

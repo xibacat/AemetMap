@@ -207,29 +207,29 @@ function plotInterpolatedMap(datosToPlot) {
 function isSafeNum(num) {
     return !(num == null || isNaN(num) || !isFinite(num));
 }
-function colorForTemp(prec) {
-    if (prec > 250)
-        return { fillColor: "rgb(169, 38, 38) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 150)
-        return { fillColor: "rgb(160, 0, 88) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 150)
-        return { fillColor: "rgb(197, 34, 230)", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 100)
-        return { fillColor: " #8e44ad ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 75)
-        return { fillColor: "rgb(91, 68, 173) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 50)
-        return { fillColor: "rgb(68, 126, 173) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 25)
-        return { fillColor: "rgb(68, 166, 173) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 15)
-        return { fillColor: "rgb(109, 175, 161) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 10)
-        return { fillColor: "rgb(106, 175, 140) ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 5)
-        return { fillColor: "rgb(170, 201, 166)", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 0)
-        return { fillColor: "rgb(204, 212, 202) ", fillOpacity: 0.5, weight: 0 }
+function colorForTemp(temp) {
+    if (temp > 40)
+        return { fillColor: "rgb(255, 0, 0) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 35)
+        return { fillColor: "rgb(255, 102, 0) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 30)
+        return { fillColor: "rgb(255, 166, 0)", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 25)
+        return { fillColor: "rgb(255, 217, 0) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 20)
+        return { fillColor: "rgb(8, 252, 0) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 15)
+        return { fillColor: "rgb(0, 255, 115) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 10)
+        return { fillColor: "rgb(0, 217, 255) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 5)
+        return { fillColor: "rgb(0, 162, 255) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > 0)
+        return { fillColor: "rgb(255, 255, 255) ", fillOpacity: 0.5, weight: 0 }
+    else if (temp > -5)
+        return { fillColor: "rgb(205, 143, 255)", fillOpacity: 0.5, weight: 0 }
+    else if (temp > -10)
+        return { fillColor: "rgb(226, 82, 255) ", fillOpacity: 0.5, weight: 0 }
     else
         return { fillColor: "white", fillOpacity: 0, weight: 0 }
 

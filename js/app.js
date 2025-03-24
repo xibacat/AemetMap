@@ -21,7 +21,7 @@ const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
 //Grupo de markers que luego podré eliminar;
-var markerGroup = L.layerGroup().addTo(map);
+let markerGroup = L.layerGroup().addTo(map);
 
 //Pedir los datos a la API
 refreshData();
@@ -30,7 +30,7 @@ refreshData();
  * Esconder y mostrar el panel lateral
  */
 function clickMenu() {
-    var sidebar = document.getElementById("sidebar");
+    let sidebar = document.getElementById("sidebar");
     if (menuActive) {
         btn_menu.innerHTML = '<span class="icon icon-menu"></span>';
         sidebar.style.display = "none";
@@ -67,7 +67,7 @@ function refreshData() {
                     for (let i = 0; i < data2.length; i++) {
                         datos[i].fint = new Date(data2[i].fint);
                     }
-                    var allDates = data2.map(d => d.fint);
+                    let allDates = data2.map(d => d.fint);
 
                     uniqueDates = allDates.filter(onlyUniqueDates);
 
@@ -136,6 +136,8 @@ function enableHeatAndMarkers() {
 }
 
 function plotInterpolatedMap(datosToPlot) {
+    let isPrec = false;
+    let points = [];
     if (mapOn) {
         map.removeLayer(heatLayer);
         mapOn = false;
@@ -143,20 +145,26 @@ function plotInterpolatedMap(datosToPlot) {
     }
     else {
         //Transformar datos a puntos de Turf
-        var points = datosToPlot
-            .filter(d => d.fint.getTime() === getSelectedDate().getTime() && d.lat > 35);
+        if (document.getElementById("totalizar").checked) {
+            points = totalizarDatosPorUbicacion(datosToPlot.filter(d => d.lat > 35))
+        }
+        else {
+            points = datosToPlot
+                .filter(d => d.fint.getTime() === getSelectedDate().getTime() && d.lat > 35);
+        }
         switch (document.querySelector('input[name="radios"]:checked').id) {
             case "ta":
-                points = points.filter(d => d.tamax != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta }));
+                points = points.filter(d => isSafeNum(d.ta)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta }));
                 break;
             case "tmin":
-                points = points.filter(d => d.tamin != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin }));
+                points = points.filter(d => isSafeNum(d.tamin)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin }));
                 break;
             case "prec":
-                points = points.filter(d => d.prec != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.prec }));
+                points = points.filter(d => isSafeNum(d.prec)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.prec }));
+                isPrec = true;
                 break;
             default: //tamax
-                points = points.filter(d => d.tamax != null).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax }));
+                points = points.filter(d => isSafeNum(d.tamax)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax }));
                 break;
         }
 
@@ -165,22 +173,17 @@ function plotInterpolatedMap(datosToPlot) {
         points = turf.featureCollection(points);
 
         //interpolation options: rectangular grid using 'dato' variable in kilometers using the power of 2, higher values result in smoother result
-        var options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 2 };
+        let options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 2 };
         //create Turf grid
-        var malla = turf.interpolate(points, 10, options);
+        let malla = turf.interpolate(points, 10, options);
         //add to Leaflet
         heatLayer = L.geoJSON(malla, {
             style: function (feature) {
-                var val = feature.properties.dato;
-                if (val > 30) {
-                    return { fillColor: "orangered", fillOpacity: 0.5, weight: 0 };
-                } else if (val > 20 && val < 30) {
-                    return { fillColor: "yellowgreen", fillOpacity: 0.5, weight: 0 };
-                } else if (val > 10 && val < 20) {
-                    return { fillColor: "darkgreen", fillOpacity: 0.5, weight: 0 };
-                } else {
-                    return { fillColor: "blue", fillOpacity: 0.5, weight: 0 };
-                }
+                let val = feature.properties.dato;
+                if (isPrec)
+                    return colorForPrec(val)
+                else
+                    return colorForTemp(val);
             }//,
             // onEachFeature: function (feature, layer) {
             //     layer.on({
@@ -197,6 +200,121 @@ function plotInterpolatedMap(datosToPlot) {
         document.getElementById("btn_heatmap").innerHTML = "Delete Heat Map"
     }
 }
+/**
+ *
+ * @param {Number} num
+ */
+function isSafeNum(num) {
+    return !(num == null || isNaN(num) || !isFinite(num));
+}
+function colorForTemp(prec) {
+    if (prec > 250)
+        return { fillColor: "rgb(169, 38, 38) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 150)
+        return { fillColor: "rgb(160, 0, 88) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 150)
+        return { fillColor: "rgb(197, 34, 230)", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 100)
+        return { fillColor: " #8e44ad ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 75)
+        return { fillColor: "rgb(91, 68, 173) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 50)
+        return { fillColor: "rgb(68, 126, 173) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 25)
+        return { fillColor: "rgb(68, 166, 173) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 15)
+        return { fillColor: "rgb(109, 175, 161) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 10)
+        return { fillColor: "rgb(106, 175, 140) ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 5)
+        return { fillColor: "rgb(170, 201, 166)", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 0)
+        return { fillColor: "rgb(204, 212, 202) ", fillOpacity: 0.5, weight: 0 }
+    else
+        return { fillColor: "white", fillOpacity: 0, weight: 0 }
+
+}
+function colorForPrec(prec) {
+    if (prec > 250)
+        return { fillColor: "darkred", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 150)
+        return { fillColor: "red", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 150)
+        return { fillColor: "magenta", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 100)
+        return { fillColor: "darkmagenta", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 75)
+        return { fillColor: "indigo ", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 50)
+        return { fillColor: "blue", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 25)
+        return { fillColor: "deepskyblue", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 15)
+        return { fillColor: "turquoise", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 10)
+        return { fillColor: "cyan", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 5)
+        return { fillColor: "lightcyan", fillOpacity: 0.5, weight: 0 }
+    else if (prec > 0)
+        return { fillColor: "lightgray", fillOpacity: 0.5, weight: 0 }
+    else
+        return { fillColor: "white", fillOpacity: 0, weight: 0 }
+
+}
+function totalizarDatosPorUbicacion(datosAtotalizar) {
+    // Objeto para almacenar los resultados agrupados por ubicación
+    const resultado = {};
+
+    // Iterar sobre cada elemento en el array
+    datosAtotalizar.forEach(item => {
+        const ubicacion = item.ubi;
+
+        // Si no existe la ubicación en el objeto resultado, inicializarla
+        if (!resultado[ubicacion]) {
+            resultado[ubicacion] = {
+                prec: 0,
+                tamax: -Infinity,
+                tamin: Infinity,
+                sumaTa: 0,
+                contadorTa: 0,
+                ubi: item.ubi,
+                lat: item.lat,
+                lon: item.lon
+            };
+        }
+
+        // Sumar el valor de prec
+        resultado[ubicacion].prec += item.prec;
+
+        // Encontrar el máximo de tamax
+        if (item.tamax > resultado[ubicacion].tamax) {
+            resultado[ubicacion].tamax = item.tamax;
+        }
+
+        // Encontrar el mínimo de tamin
+        if (item.tamin < resultado[ubicacion].tamin) {
+            resultado[ubicacion].tamin = item.tamin;
+        }
+
+        // Sumar el valor de ta y contar el número de elementos para el promedio
+        resultado[ubicacion].sumaTa += item.ta;
+        resultado[ubicacion].contadorTa++;
+
+
+    });
+    let aux = Array(resultado.length);
+    let i = 0;
+    // Calcular el promedio de ta para cada ubicación
+    for (let ubi in resultado) {
+        resultado[ubi].ta = resultado[ubi].sumaTa / resultado[ubi].contadorTa;
+        aux[i++] = resultado[ubi];
+    }
+
+
+    // Devolver el objeto con los resultados
+    return aux;
+}
+
 /**
  *
  * @param {Array} data
@@ -252,7 +370,7 @@ function poblarTabla(data) {
 }
 
 function plotHeatMap() {
-    var heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
+    let heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
         .map(d => [d.lat, d.lon, d.tamax]);
 
     //Si tengo alguna capa de calor la borro
@@ -273,18 +391,18 @@ function plotHeatMap() {
 function agregarDesplegable(dateArray) {
     //alert(dateArray);
     // Crear el elemento <select>
-    var select = document.getElementById('desplegable');//document.createElement('select');
+    let select = document.getElementById('desplegable');//document.createElement('select');
 
     // Crear opciones para el desplegable
     dateArray.forEach(e => {
-        var option1 = document.createElement('option');
+        let option1 = document.createElement('option');
         option1.value = e;
         option1.text = toDateHourString(e);
         select.appendChild(option1);
     });
 
     // Obtener el objeto con id 'sidepane'
-    //var sidepane = document.getElementById('sidebar');
+    //let sidepane = document.getElementById('sidebar');
 
     // Añadir el <select> al innerHTML del objeto con id 'sidepane'
     //sidepane.innerHTML = ''; // Limpiar el contenido anterior (opcional)
@@ -313,7 +431,7 @@ function toDateHourString(fecha) {
  * @returns
  */
 function getSelectedDate() {
-    var select = document.getElementById('desplegable');
+    let select = document.getElementById('desplegable');
     return new Date(select.options[select.selectedIndex].value);
 }
 function setMarkers() {
@@ -326,7 +444,7 @@ function setMarkers() {
         document.getElementById("btn_markers").innerHTML = "Add Markers to Map"
     }
     else {
-        var markerRenderer = L.canvas({ padding: 0.5 });
+        let markerRenderer = L.canvas({ padding: 0.5 });
         datos.filter(d => d.fint.getTime() === maxDate.getTime())
             .forEach(d => {
                 L.circleMarker([d.lat, d.lon], {
@@ -352,7 +470,7 @@ function setMarkers() {
  * @returns
  */
 function getMaxDate(dateArray) {
-    var date = new Date(0);
+    let date = new Date(0);
     dateArray.forEach(e => {
         if (e.getTime() > date.getTime())
             date = e;

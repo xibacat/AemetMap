@@ -138,6 +138,7 @@ function enableHeatAndMarkers() {
 
 }
 
+//TODO ajustar el mapa al contorno del mapa con más fidelidad
 function plotInterpolatedMap(datosToPlot) {
     let isPrec = false;
     let points = [];
@@ -149,7 +150,7 @@ function plotInterpolatedMap(datosToPlot) {
     }
     else {
         //TODO refactorizar para plotear los datos que se pasen
-        //TODO solo trabajar con valores totalizados, pero decidirlo fuera de aquí
+        //TODO solo trabajar con valores totalizados, pero decidirlo fuera de aquí. tampocos seleccionar aquí si es tmax o prec
         //Transformar datos a puntos de Turf
         if (document.getElementById("totalizar").checked) {
             points = totalizarDatosPorUbicacion(datosToPlot.filter(d => d.lat > 35))
@@ -206,7 +207,7 @@ function plotInterpolatedMap(datosToPlot) {
         document.getElementById("btn_heatmap").innerHTML = "Delete Color Map"
     }
 }
-
+//TODO mostrar escalas en la ventana
 function colorForTemp(temp) {
     if (temp > 40)
         return { fillColor: "rgb(255, 0, 0) ", fillOpacity: 0.5, weight: 0 }

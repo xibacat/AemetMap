@@ -135,17 +135,21 @@ function enableHeatAndMarkers() {
     document.getElementById("btn_markers").onclick = () => setMarkers();
     document.getElementById("btn_heatmap").classList.replace("btn-default", "btn-positive");
     document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap(datos);
+
 }
 
 function plotInterpolatedMap(datosToPlot) {
     let isPrec = false;
     let points = [];
     if (mapOn) {
+        //TODO función que borre el mapa
         map.removeLayer(heatLayer);
         mapOn = false;
-        document.getElementById("btn_heatmap").innerHTML = "Plot Heat Map"
+        document.getElementById("btn_heatmap").innerHTML = "Plot Color Map"
     }
     else {
+        //TODO refactorizar para plotear los datos que se pasen
+        //TODO solo trabajar con valores totalizados, pero decidirlo fuera de aquí
         //Transformar datos a puntos de Turf
         if (document.getElementById("totalizar").checked) {
             points = totalizarDatosPorUbicacion(datosToPlot.filter(d => d.lat > 35))
@@ -199,7 +203,7 @@ function plotInterpolatedMap(datosToPlot) {
 
         heatLayer.eachLayer(l => l.bringToBack());
         mapOn = true;
-        document.getElementById("btn_heatmap").innerHTML = "Delete Heat Map"
+        document.getElementById("btn_heatmap").innerHTML = "Delete Color Map"
     }
 }
 
@@ -365,6 +369,7 @@ function poblarTabla(data) {
     tabla.appendChild(cuerpo);
 }
 
+//TODO eliminar esta función, no se usa
 function plotHeatMap() {
     let heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
         .map(d => [d.lat, d.lon, d.tamax]);
@@ -444,4 +449,4 @@ function setMarkers() {
     }
 }
 
-
+//TODO añadir pestaña con gráfica que muestre valores de una sola estación ¿La seleccionada en un marker?

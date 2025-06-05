@@ -138,7 +138,7 @@ function enableHeatAndMarkers() {
 
 }
 
-//TODO ajustar el mapa al contorno del mapa con más fidelidad
+//TODO ajustar el mapa al contorno del mapa con más fidelidad y markers por encima del mapa
 function plotInterpolatedMap(datosToPlot) {
     let isPrec = false;
     let points = [];

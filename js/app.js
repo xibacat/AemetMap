@@ -1,3 +1,5 @@
+import { onlyUnique, onlyUniqueDates, toDateHourString, isSafeNum, getMaxDate } from "./functions.js";
+
 const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas";
 const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
 
@@ -200,13 +202,7 @@ function plotInterpolatedMap(datosToPlot) {
         document.getElementById("btn_heatmap").innerHTML = "Delete Heat Map"
     }
 }
-/**
- *
- * @param {Number} num
- */
-function isSafeNum(num) {
-    return !(num == null || isNaN(num) || !isFinite(num));
-}
+
 function colorForTemp(temp) {
     if (temp > 40)
         return { fillColor: "rgb(255, 0, 0) ", fillOpacity: 0.5, weight: 0 }
@@ -408,24 +404,7 @@ function agregarDesplegable(dateArray) {
     //sidepane.innerHTML = ''; // Limpiar el contenido anterior (opcional)
     //sidepane.appendChild(select);
 }
-/**
- *
- * @param {Date} fecha
- * @returns
- */
-function toDateHourString(fecha) {
-    //alert(fecha +"es del tipo" + (typeof fecha))
-    return fecha.toLocaleString('es-ES', {
 
-        year: 'numeric',    // Año completo (2025)
-        month: 'long',      // Mes (Enero, Febrero, etc.)
-        day: 'numeric',     // Día del mes (1, 2, 3, etc.)
-        hour: '2-digit',    // Hora en formato de 2 dígitos
-        minute: '2-digit',  // Minutos en formato de 2 dígitos
-        second: '2-digit',  // Segundos en formato de 2 dígitos
-        hour12: false       // Si se usa el formato de 24 horas
-    });
-}
 /**
  *
  * @returns
@@ -464,24 +443,5 @@ function setMarkers() {
         document.getElementById("btn_markers").innerHTML = "Remove Markers"
     }
 }
-/**
- *
- * @param {Date[]} dateArray
- * @returns
- */
-function getMaxDate(dateArray) {
-    let date = new Date(0);
-    dateArray.forEach(e => {
-        if (e.getTime() > date.getTime())
-            date = e;
-    });
-    return date;
-}
-function onlyUniqueDates(fecha, index, self) {
 
-    return index === self.findIndex((f) => f.getTime() === fecha.getTime());
-}
 
-function onlyUnique(value, index, array) {
-    return array.indexOf(value) === index;
-}

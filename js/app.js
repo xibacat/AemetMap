@@ -6,6 +6,7 @@ const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0
 
 
 let datos;
+let datosTotalizados;
 let maxDate;
 let uniqueDates;
 let uniqueUbic;
@@ -79,6 +80,7 @@ function refreshData() {
 
                     maxDate = new Date(getMaxDate(allDates));
                     uniqueUbic = datos.map(d => d.ubi).filter(onlyUnique);
+                    datosTotalizados = totalizarDatosPorUbicacion(datos.filter(d => d.lat > 35));
 
                     console.log("Max Date: " + maxDate)
 
@@ -112,7 +114,7 @@ function optionsChanged() {
         poblarTabla(datos);
     if (document.getElementById("map").style.display === "") {
 
-        plotInterpolatedMap(datos);
+        plotInterpolatedMap(getSelectedData(datosTotalizados));
     }
 
 }
@@ -138,50 +140,40 @@ function enableHeatAndMarkers() {
     document.getElementById("btn_markers").classList.replace("btn-default", "btn-positive");
     document.getElementById("btn_markers").onclick = () => setMarkers();
     document.getElementById("btn_heatmap").classList.replace("btn-default", "btn-positive");
-    document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap(datos);
+    document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap(getSelectedData(datosTotalizados));
 
+}
+function getSelectedData(points) {
+    switch (document.querySelector('input[name="radios"]:checked').id) {
+        case "ta":
+            return { data: points.filter(d => isSafeNum(d.ta)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta })), isPrec: false }
+
+        case "tamin":
+            return { data: points.filter(d => isSafeNum(d.tamin)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin })), isPrec: false }
+
+        case "prec":
+            return { data: points.filter(d => isSafeNum(d.prec)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.prec })), isPrec: true }
+
+        default: //tamax
+            return { data: points.filter(d => isSafeNum(d.tamax)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax })), isPrec: false }
+
+    }
 }
 
 //TODO ajustar el mapa al contorno del mapa con más fidelidad y markers por encima del mapa
-function plotInterpolatedMap(datosToPlot) {
-    let isPrec = false;
-    let points = [];
+function plotInterpolatedMap(points) {
+    let isPrec = points.isPrec;
+
     if (mapOn) {
-        //TODO función que borre el mapa
+        //TODO esto no debería hacerse aquí, sino fuera
         map.removeLayer(heatLayer);
         mapOn = false;
         document.getElementById("btn_heatmap").innerHTML = "Plot Color Map"
     }
     else {
-        //TODO refactorizar para plotear los datos que se pasen
-        //TODO solo trabajar con valores totalizados, pero decidirlo fuera de aquí. tampocos seleccionar aquí si es tmax o prec
-        //Transformar datos a puntos de Turf
-        if (document.getElementById("totalizar").checked) {
-            points = totalizarDatosPorUbicacion(datosToPlot.filter(d => d.lat > 35))
-        }
-        else {
-            points = datosToPlot
-                .filter(d => d.fint.getTime() === getSelectedDate().getTime() && d.lat > 35);
-        }
-        switch (document.querySelector('input[name="radios"]:checked').id) {
-            case "ta":
-                points = points.filter(d => isSafeNum(d.ta)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta }));
-                break;
-            case "tamin":
-                points = points.filter(d => isSafeNum(d.tamin)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin }));
-                break;
-            case "prec":
-                points = points.filter(d => isSafeNum(d.prec)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.prec }));
-                isPrec = true;
-                break;
-            default: //tamax
-                points = points.filter(d => isSafeNum(d.tamax)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamax }));
-                break;
-        }
-
 
         //convert to Turf featureCollection
-        points = turf.featureCollection(points);
+        points = turf.featureCollection(points.data);
 
         //interpolation options: rectangular grid using 'dato' variable in kilometers using the power of 2, higher values result in smoother result
         let options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 2 };

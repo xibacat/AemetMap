@@ -1,4 +1,5 @@
 //TODO mostrar escalas en la ventana
+
 const temperatureColors = [
     { min: -Infinity, max: -20, color: '#4B0082' }, // Violeta oscuro
     { min: -20, max: -10, color: '#00008B' },       // Azul muy oscuro
@@ -9,13 +10,12 @@ const temperatureColors = [
     { min: 10, max: 15, color: '#32CD32' },         // Verde
     { min: 15, max: 20, color: '#ADFF2F' },         // Amarillo verdoso
     { min: 20, max: 25, color: '#FFFF00' },         // Amarillo
-    { min: 25, max: 30, color: '#FFA500' },         // Naranja claro
-    { min: 30, max: 35, color: '#FF8C00' },         // Naranja
+    { min: 25, max: 30, color: '#FFD700' },         // Amarillo anaranjado (más brillante)
+    { min: 30, max: 35, color: '#FF7300' },         // Naranja más intenso (mejor contraste)
     { min: 35, max: 40, color: '#FF4500' },         // Rojo
     { min: 40, max: 45, color: '#B22222' },         // Rojo fuego
-    { min: 45, max: Infinity, color: '#800000' }    // Rojo oscuro / marrón quemado
+    { min: 45, max: Infinity, color: '#800000' }    // Rojo oscuro / granate
 ];
-
 function getColorForTemperature(temp) {
     const range = temperatureColors.find(r => temp >= r.min && temp < r.max);
     return range ? range.color : '#000000'; // Color por defecto si no se encuentra

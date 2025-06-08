@@ -1,4 +1,5 @@
 import { onlyUnique, onlyUniqueDates, toDateHourString, isSafeNum, getMaxDate } from "./functions.js";
+import { colorForPrec, colorForTemp } from "./color4map.js";
 
 const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas";
 const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
@@ -109,8 +110,11 @@ function habilitarInterfaz() {
 function optionsChanged() {
     if (document.getElementById("tabla").style.display === "initial")
         poblarTabla(datos);
-    if (document.getElementById("map").style.display === "")
+    if (document.getElementById("map").style.display === "") {
+
         plotInterpolatedMap(datos);
+    }
+
 }
 
 function enableTabla() {
@@ -207,61 +211,7 @@ function plotInterpolatedMap(datosToPlot) {
         document.getElementById("btn_heatmap").innerHTML = "Delete Color Map"
     }
 }
-//TODO mostrar escalas en la ventana
-function colorForTemp(temp) {
-    if (temp > 40)
-        return { fillColor: "rgb(255, 0, 0) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 35)
-        return { fillColor: "rgb(255, 102, 0) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 30)
-        return { fillColor: "rgb(255, 166, 0)", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 25)
-        return { fillColor: "rgb(255, 217, 0) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 20)
-        return { fillColor: "rgb(8, 252, 0) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 15)
-        return { fillColor: "rgb(0, 255, 115) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 10)
-        return { fillColor: "rgb(0, 217, 255) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 5)
-        return { fillColor: "rgb(0, 162, 255) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > 0)
-        return { fillColor: "rgb(255, 255, 255) ", fillOpacity: 0.5, weight: 0 }
-    else if (temp > -5)
-        return { fillColor: "rgb(205, 143, 255)", fillOpacity: 0.5, weight: 0 }
-    else if (temp > -10)
-        return { fillColor: "rgb(226, 82, 255) ", fillOpacity: 0.5, weight: 0 }
-    else
-        return { fillColor: "white", fillOpacity: 0, weight: 0 }
 
-}
-function colorForPrec(prec) {
-    if (prec > 250)
-        return { fillColor: "darkred", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 150)
-        return { fillColor: "red", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 150)
-        return { fillColor: "magenta", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 100)
-        return { fillColor: "darkmagenta", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 75)
-        return { fillColor: "indigo ", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 50)
-        return { fillColor: "blue", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 25)
-        return { fillColor: "deepskyblue", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 15)
-        return { fillColor: "turquoise", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 10)
-        return { fillColor: "cyan", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 5)
-        return { fillColor: "lightcyan", fillOpacity: 0.5, weight: 0 }
-    else if (prec > 0)
-        return { fillColor: "lightgray", fillOpacity: 0.5, weight: 0 }
-    else
-        return { fillColor: "white", fillOpacity: 0, weight: 0 }
-
-}
 function totalizarDatosPorUbicacion(datosAtotalizar) {
     // Objeto para almacenar los resultados agrupados por ubicación
     const resultado = {};

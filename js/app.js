@@ -320,22 +320,6 @@ function poblarTabla(data) {
     tabla.appendChild(cuerpo);
 }
 
-//TODO eliminar esta función, no se usa
-function plotHeatMap() {
-    let heatData = datos.filter(d => d.fint.getTime() === maxDate.getTime())
-        .map(d => [d.lat, d.lon, d.tamax]);
-
-    //Si tengo alguna capa de calor la borro
-    if (heatLayer != null)
-        map.removeLayer(heatLayer);
-    //Mostrar datos heat
-    heatLayer = L.heatLayer(heatData, {
-        radius: 25, // radio de los puntos de calor
-        blur: 25, // difuminado de los puntos
-        maxZoom: 13 // zoom máximo en el que se puede ver el mapa de calor
-    }).addTo(map);
-}
-
 /**
  *
  * @param {Date[]} dateArray

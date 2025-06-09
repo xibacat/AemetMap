@@ -20,6 +20,11 @@ btn_menu.onclick = () => clickMenu();
 
 //Crear el mapa
 const map = L.map('map').setView([39.5, -0.4], 10);
+// map.createPane('polygonsPane');
+// map.getPane('polygonsPane').style.zIndex = 400;
+
+// map.createPane('markersPane');
+// map.getPane('markersPane').style.zIndex = 650; // más alto que polygonsPane
 
 const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 17,
@@ -139,15 +144,15 @@ function disableHeatAndMarkers() {
 }
 function enableHeatAndMarkers() {
     document.getElementById("btn_markers").classList.replace("btn-default", "btn-positive");
-    document.getElementById("btn_markers").onclick = () => setMarkers();
+    document.getElementById("btn_markers").onclick = () => setMarkers(datosTotalizados);
     document.getElementById("btn_heatmap").classList.replace("btn-default", "btn-positive");
     document.getElementById("btn_heatmap").onclick = () => plotInterpolatedMap(getSelectedData(datosTotalizados));
 
 }
 function getSelectedData(points) {
     switch (document.querySelector('input[name="radios"]:checked').id) {
-        case "ta":
-            return { data: points.filter(d => isSafeNum(d.ta)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.ta })), isPrec: false }
+        case "tavg":
+            return { data: points.filter(d => isSafeNum(d.tavg)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tavg })), isPrec: false }
 
         case "tamin":
             return { data: points.filter(d => isSafeNum(d.tamin)).map(d => turf.point([d.lon, d.lat], { name: d.ubi, dato: d.tamin })), isPrec: false }
@@ -183,6 +188,8 @@ function plotInterpolatedMap(points) {
         let malla = turf.interpolate(points, 10, options);
         //add to Leaflet
         heatLayer = L.geoJSON(malla, {
+            // pane: 'polygonsPane',
+            interactive: false,
             style: function (feature) {
                 let val = feature.properties.dato;
                 if (isPrec)
@@ -200,7 +207,7 @@ function plotInterpolatedMap(points) {
             // }
         }).addTo(map);
 
-        heatLayer.eachLayer(l => l.bringToBack());
+        //heatLayer.eachLayer(l => l.bringToBack());
         mapOn = true;
         document.getElementById("btn_heatmap").innerHTML = "Delete Color Map"
 
@@ -220,7 +227,7 @@ function crearLeyenda(rangos) {
             const label = `
       <i style=
         "background:${rango.color};
-         
+
          width: 18px;
          height: 18px;
          display: inline-block;
@@ -284,7 +291,7 @@ function totalizarDatosPorUbicacion(datosAtotalizar) {
     let i = 0;
     // Calcular el promedio de ta para cada ubicación
     for (let ubi in resultado) {
-        resultado[ubi].ta = resultado[ubi].sumaTa / resultado[ubi].contadorTa;
+        resultado[ubi].tavg = Math.floor(10*(resultado[ubi].sumaTa / resultado[ubi].contadorTa))/10;
         aux[i++] = resultado[ubi];
     }
 
@@ -380,8 +387,8 @@ function getSelectedDate() {
     let select = document.getElementById('desplegable');
     return new Date(select.options[select.selectedIndex].value);
 }
-function setMarkers() {
-    if (datos.length == 0)
+function setMarkers(datosMarkers) {
+    if (datosMarkers.length == 0)
         refreshData();
 
     if (markersOn) {
@@ -391,21 +398,22 @@ function setMarkers() {
     }
     else {
         let markerRenderer = L.canvas({ padding: 0.5 });
-        datos.filter(d => d.fint.getTime() === maxDate.getTime())
+        datosMarkers//.filter(d => d.fint.getTime() === maxDate.getTime())
             .forEach(d => {
                 L.circleMarker([d.lat, d.lon], {
+                    // pane: 'markersPane',
                     renderer: markerRenderer,
                     radius: 5
                 }).addTo(markerGroup).bindPopup(
                     '<b> Ubicación: ' + d.ubi + "</b>" +
-                    "<br>Hora: " + toDateHourString(d.fint) +
+                    //"<br>Hora: " + toDateHourString(d.fint) +
                     "<br>Precipitación: " + d.prec + " mm" +
                     "<br>Tª min: " + d.tamin + " ºC" +
                     "<br>Tª max: " + d.tamax + " ºC" +
-                    "<br>Tª actual: " + d.ta + " ºC"
+                    "<br>Tª media: " + d.tavg + " ºC"
                 );
             });
-        markerGroup.eachLayer(l => l.bringToBack());
+        //markerGroup.eachLayer(l => l.bringToFront());
         markersOn = true;
         document.getElementById("btn_markers").innerHTML = "Remove Markers"
     }

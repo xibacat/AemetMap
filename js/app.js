@@ -1,5 +1,5 @@
 import { onlyUnique, onlyUniqueDates, toDateHourString, isSafeNum, getMaxDate } from "./functions.js";
-import { colorForPrec, colorForTemp } from "./color4map.js";
+import { colorForPrec, colorForTemp, temperatureColors, precipitationColors } from "./color4map.js";
 
 const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas";
 const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
@@ -11,6 +11,7 @@ let maxDate;
 let uniqueDates;
 let uniqueUbic;
 let heatLayer;
+let leyenda;
 let menuActive = true;
 let markersOn = false;
 let mapOn = false;
@@ -167,6 +168,7 @@ function plotInterpolatedMap(points) {
     if (mapOn) {
         //TODO esto no debería hacerse aquí, sino fuera
         map.removeLayer(heatLayer);
+        leyenda.remove();
         mapOn = false;
         document.getElementById("btn_heatmap").innerHTML = "Plot Color Map"
     }
@@ -201,7 +203,40 @@ function plotInterpolatedMap(points) {
         heatLayer.eachLayer(l => l.bringToBack());
         mapOn = true;
         document.getElementById("btn_heatmap").innerHTML = "Delete Color Map"
+
+        leyenda = crearLeyenda(isPrec ? precipitationColors : temperatureColors);
     }
+}
+function crearLeyenda(rangos) {
+    const legend = L.control({ position: 'bottomright' });
+
+    legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'info legend');
+
+        // Agregar una clase CSS básica
+        let labels = [];
+
+        rangos.forEach(rango => {
+            const label = `
+      <i style=
+        "background:${rango.color};
+         
+         width: 18px;
+         height: 18px;
+         display: inline-block;
+         margin-right: 8px;"
+         ></i>
+      ${rango.min} – ${rango.max}
+    `;
+            labels.push(label);
+        });
+
+        div.innerHTML = labels.join('<br>');
+        return div;
+    };
+
+    legend.addTo(map);
+    return legend;
 }
 
 function totalizarDatosPorUbicacion(datosAtotalizar) {

@@ -1,6 +1,6 @@
 //TODO mostrar escalas en la ventana
 
-const temperatureColors = [
+export const temperatureColors = [
     { min: -Infinity, max: -20, color: '#4B0082' }, // Violeta oscuro
     { min: -20, max: -10, color: '#00008B' },       // Azul muy oscuro
     { min: -10, max: -5, color: '#0000CD' },        // Azul oscuro
@@ -22,10 +22,10 @@ function getColorForTemperature(temp) {
 }
 
 export function colorForTemp(temp) {
-    return { fillColor: getColorForTemperature(temp), fillOpacity: 0.5, weight: 0 }
+    return { fillColor: getColorForTemperature(temp), fillOpacity: 0.7, weight: 0 }
 
 }
-const precipitationColors = [
+export const precipitationColors = [
     { min: 0, max: 0.1, color: '#FFFFFF' },   // Sin precipitación (blanco)
     { min: 0.1, max: 1, color: '#D4F4FA' },   // Muy ligera (azul muy claro)
     { min: 1, max: 5, color: '#A0D8EF' },     // Ligera
@@ -44,7 +44,12 @@ function getColorForPrecipitation(mm) {
     return range ? range.color : '#000000'; // Negro si no se encuentra rango
 }
 export function colorForPrec(prec) {
-    return { fillColor: getColorForPrecipitation(prec), fillOpacity: 0.5, weight: 0 }
+    let color = getColorForPrecipitation(prec);
+    return {
+        fillColor: color,
+        fillOpacity: color === '#FFFFFF' ? 0 : 0.7,
+        weight: 0
+    }
 
 }
 

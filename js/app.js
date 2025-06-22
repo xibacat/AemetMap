@@ -1,6 +1,6 @@
 import { onlyUnique, onlyUniqueDates, toDateHourString, isSafeNum, getMaxDate } from "./functions.js";
 import { colorForPrec, colorForTemp, temperatureColors, precipitationColors } from "./color4map.js";
-
+import { spainPoints,spainPointsHD } from "./spainGeoJSON.js";
 const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas";
 const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
 
@@ -183,9 +183,12 @@ function plotInterpolatedMap(points) {
         points = turf.featureCollection(points.data);
 
         //interpolation options: rectangular grid using 'dato' variable in kilometers using the power of 2, higher values result in smoother result
-        let options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 2 };
+        let options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 5 };
         //create Turf grid
-        let malla = turf.interpolate(points, 10, options);
+        let malla = turf.interpolate(points, 8, options);
+
+        let spainPolygon = turf.polygon(spainPointsHD);
+        malla = malla.features.filter(i => turf.booleanContains(spainPolygon, i));
         //add to Leaflet
         heatLayer = L.geoJSON(malla, {
             // pane: 'polygonsPane',
@@ -196,6 +199,7 @@ function plotInterpolatedMap(points) {
                     return colorForPrec(val)
                 else
                     return colorForTemp(val);
+
             }//,
             // onEachFeature: function (feature, layer) {
             //     layer.on({
@@ -291,7 +295,7 @@ function totalizarDatosPorUbicacion(datosAtotalizar) {
     let i = 0;
     // Calcular el promedio de ta para cada ubicación
     for (let ubi in resultado) {
-        resultado[ubi].tavg = Math.floor(10*(resultado[ubi].sumaTa / resultado[ubi].contadorTa))/10;
+        resultado[ubi].tavg = Math.floor(10 * (resultado[ubi].sumaTa / resultado[ubi].contadorTa)) / 10;
         aux[i++] = resultado[ubi];
     }
 

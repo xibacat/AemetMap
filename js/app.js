@@ -1,6 +1,6 @@
 import { onlyUnique, onlyUniqueDates, toDateHourString, isSafeNum, getMaxDate } from "./functions.js";
 import { colorForPrec, colorForTemp, temperatureColors, precipitationColors } from "./color4map.js";
-import { spainPoints,spainPointsHD } from "./spainGeoJSON.js";
+import { spainPoints, spainPointsHD } from "./spainGeoJSON.js";
 const URL_AEMET = "https://opendata.aemet.es/opendata/api/observacion/convencional/todas";
 const APIKEY_AEMET = "?api_key=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4YXZpZXIuaWJhY2F0QGdtYWlsLmNvbSIsImp0aSI6ImU0MzJhOTMwLTMzNmUtNDg4Ni1iNjY3LTgxMzcxMjEyZjJmZCIsImlzcyI6IkFFTUVUIiwiaWF0IjoxNzQxMTA4NTA4LCJ1c2VySWQiOiJlNDMyYTkzMC0zMzZlLTQ4ODYtYjY2Ny04MTM3MTIxMmYyZmQiLCJyb2xlIjoiIn0.2eQST-_KQvjRKLGwudOyrDU2fiD17c3aiZSzLtGkr3s"
 
@@ -103,12 +103,12 @@ function refreshData() {
         });
 }
 function habilitarInterfaz() {
-    agregarDesplegable(uniqueDates);
+    //agregarDesplegable(uniqueDates);
     document.getElementById("form").style.visibility = "visible";
     enableHeatAndMarkers();
     document.getElementsByName("radios").forEach(r => { r.onchange = () => optionsChanged(); });
     document.getElementById('desplegable').onchange = () => optionsChanged();
-    document.getElementById('totalizar').onchange = () => optionsChanged();
+    //document.getElementById('totalizar').onchange = () => optionsChanged();
 
     //Habilitar pestañas
     document.getElementById("tab_tabla").onclick = () => enableTabla();
@@ -185,9 +185,9 @@ function plotInterpolatedMap(points) {
         //interpolation options: rectangular grid using 'dato' variable in kilometers using the power of 2, higher values result in smoother result
         let options = { gridType: 'square', property: 'dato', units: 'kilometers', weight: 5 };
         //create Turf grid
-        let malla = turf.interpolate(points, 8, options);
+        let malla = turf.interpolate(points, 10, options);
 
-        let spainPolygon = turf.polygon(spainPointsHD);
+        let spainPolygon = turf.polygon(spainPoints);
         malla = malla.features.filter(i => turf.booleanContains(spainPolygon, i));
         //add to Leaflet
         heatLayer = L.geoJSON(malla, {
@@ -334,13 +334,7 @@ function poblarTabla(data) {
 
     // Crear el cuerpo de la tabla
     const cuerpo = document.createElement('tbody');
-    // Recorrer cada objeto del array de datos y crear una fila
-    if (document.getElementById('totalizar').checked) {
 
-    }
-    else {
-        data = data.filter(d => d.fint.getTime() === getSelectedDate().getTime());
-    }
     data.forEach(item => {
         const fila = document.createElement('tr');
 

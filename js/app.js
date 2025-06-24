@@ -107,7 +107,7 @@ function habilitarInterfaz() {
     document.getElementById("form").style.visibility = "visible";
     enableHeatAndMarkers();
     document.getElementsByName("radios").forEach(r => { r.onchange = () => optionsChanged(); });
-    document.getElementById('desplegable').onchange = () => optionsChanged();
+    //document.getElementById('desplegable').onchange = () => optionsChanged();
     //document.getElementById('totalizar').onchange = () => optionsChanged();
 
     //Habilitar pestañas
@@ -117,7 +117,7 @@ function habilitarInterfaz() {
 
 function optionsChanged() {
     if (document.getElementById("tabla").style.display === "initial")
-        poblarTabla(datos);
+        poblarTabla(datos, 'tabla');
     if (document.getElementById("map").style.display === "") {
 
         plotInterpolatedMap(getSelectedData(datosTotalizados));
@@ -129,7 +129,7 @@ function enableTabla() {
     document.getElementById("tabla").style.display = "initial";
     document.getElementById("map").style.display = "none";
     disableHeatAndMarkers();
-    poblarTabla(datos);
+    poblarTabla(datos, 'tabla');
 }
 function enableMap() {
     document.getElementById("tabla").style.display = "none";
@@ -307,10 +307,11 @@ function totalizarDatosPorUbicacion(datosAtotalizar) {
 /**
  *
  * @param {Array} data
+ * @param String tablaHtmlId
  */
-function poblarTabla(data) {
+function poblarTabla(data,tablaHtmlId) {
     // Obtener el elemento de la tabla en el HTML
-    const tabla = document.getElementById('tabla');
+    const tabla = document.getElementById(tablaHtmlId);
 
     // Asegurarse de que la tabla esté vacía antes de agregar nuevos datos
     tabla.innerHTML = '';
